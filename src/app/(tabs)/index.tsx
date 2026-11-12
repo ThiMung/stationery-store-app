@@ -22,12 +22,15 @@ import type { Product } from "../../types/product";
 import type { Category } from "../../types/category";
 
 // Components
-import Header from "../../components/Header";
 import Banner from "../../components/Banner";
 import CategorySelector from "../../components/CategorySelector";
 import ProductSearchFilter from "../../components/ProductSearchFilter";
+import HomeTopBar from "../../components/HomeTopBar";
+import { getCartItems } from "../../services/cartService";
 
 export default function HomeScreen() {
+  const [cartCount, setCartCount] = useState(0);
+
   // Danh sách sản phẩm
   const [products, setProducts] = useState<Product[]>([]);
 
@@ -89,12 +92,32 @@ export default function HomeScreen() {
     }
   }, []);
 
+  // Cập nhật số lượng sản phẩm trong giỏ hàng
+  const loadCartCount = useCallback(async () => {
+  try {
+    const items = await getCartItems();
+  
+    // Tính tổng số lượng sản phẩm trong giỏ
+    const totalQuantity = items.reduce(
+      (total, item) => total + item.quantity,
+      0
+    );
+  
+    setCartCount(totalQuantity);
+  } catch {
+    // Chưa đăng nhập hoặc chưa lấy được giỏ hàng
+    setCartCount(0);
+  }
+  }, []);
+
   // Tự động lấy dữ liệu khi mở trang chủ
 useFocusEffect(
   useCallback(() => {
     loadData();
-  }, [loadData])
+    loadCartCount();
+  }, [loadData, loadCartCount])
 );
+
 
   // =====================================
   // 2. TÌM KIẾM VÀ LỌC SẢN PHẨM
@@ -287,34 +310,11 @@ useFocusEffect(
         // Phần đầu danh sách
         ListHeaderComponent={
           <View>
-            <Header />
-            {/* Tiêu đề trang chủ */}
-            <Text style={styles.title}>
-              Văn phòng phẩm
-            </Text>
-
-            <Text style={styles.subtitle}>
-              Đồ dùng học tập và văn phòng
-            </Text>
+            {/* Top Bar */}
+            <HomeTopBar cartCount={cartCount} />
 
             {/* Banner */}
             <Banner />
-
-            {/* Nút xem giỏ hàng */}
-            <Pressable
-              onPress={() => router.push("/cart")}
-              style={{
-                backgroundColor: "#338DA3",
-                padding: 12,
-                borderRadius: 9,
-                alignItems: "center",
-                marginVertical: 10,
-              }}
-            >
-              <Text style={{ color: "#FFFFFF", fontWeight: "bold" }}>
-                🛒 Xem giỏ hàng
-              </Text>
-            </Pressable>
 
             {/* Nút xem lịch sử đơn hàng */}
             <Pressable

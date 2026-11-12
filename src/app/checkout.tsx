@@ -15,7 +15,6 @@ import {
 import { router, useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import Header from "../components/Header";
 import { getCurrentUser } from "../services/authService";
 import { getCartItems, type CartItem } from "../services/cartService";
 import { createOrder } from "../services/orderService";
@@ -218,7 +217,6 @@ export default function CheckoutScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
-      <Header />
 
       <Pressable
         style={styles.backButton}

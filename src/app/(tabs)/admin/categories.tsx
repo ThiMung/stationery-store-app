@@ -13,7 +13,6 @@ import {
   View,
 } from "react-native";
 
-import Header from "../../../components/Header";
 import {
   addCategory,
   deleteCategory,
@@ -215,7 +214,6 @@ export default function AdminCategoriesScreen() {
         onRefresh={loadCategories}
         ListHeaderComponent={
           <View>
-            <Header />
 
             <Pressable
               style={styles.backButton}

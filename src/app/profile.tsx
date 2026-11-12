@@ -13,8 +13,12 @@ import {
 import { router, useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import Header from "../components/Header";
-import { getCurrentUser } from "../services/authService";
+import {
+  getCurrentUser,
+  logoutUser,
+} from "../services/authService";
+
+import { useAuth } from "../context/AuthContext";
 import { updateMyProfile } from "../services/profileService";
 
 export default function ProfileScreen() {
@@ -26,6 +30,9 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [needLogin, setNeedLogin] = useState(false);
+
+  const { refreshUser } = useAuth();
+  const [loggingOut, setLoggingOut] = useState(false);
 
   // Lấy thông tin tài khoản hiện tại
   const loadProfile = useCallback(async () => {
@@ -96,6 +103,43 @@ export default function ProfileScreen() {
     }
   };
 
+  // Đăng xuất
+  const handleLogout = () => {
+  Alert.alert(
+    "Đăng xuất",
+    "Bạn có chắc chắn muốn đăng xuất khỏi tài khoản này không?",
+    [
+      {
+        text: "Hủy",
+        style: "cancel",
+      },
+      {
+        text: "Đăng xuất",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            setLoggingOut(true);
+
+            await logoutUser();
+
+            // Cập nhật trạng thái đăng nhập toàn ứng dụng
+            await refreshUser();
+
+            router.replace("/(tabs)/login");
+          } catch (error) {
+            Alert.alert(
+              "Lỗi",
+              "Không thể đăng xuất. Vui lòng thử lại."
+            );
+          } finally {
+            setLoggingOut(false);
+          }
+        },
+      },
+    ]
+  );
+};
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -143,7 +187,6 @@ export default function ProfileScreen() {
     keyboardShouldPersistTaps="handled"
     showsVerticalScrollIndicator={false}
   >
-      <Header />
 
       <Pressable
         style={styles.backButton}
@@ -226,6 +269,21 @@ export default function ProfileScreen() {
             </Text>
           )}
         </Pressable>
+
+        <Pressable
+          style={styles.logoutButton}
+          onPress={handleLogout}
+          disabled={loggingOut}
+        >
+          {loggingOut ? (
+            <ActivityIndicator color="#DC5555" />
+          ) : (
+            <Text style={styles.logoutButtonText}>
+              Đăng xuất khỏi tài khoản
+            </Text>
+          )}
+        </Pressable>
+
       </View>
     </ScrollView>
   </SafeAreaView>
@@ -272,7 +330,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 7,
     marginBottom: 18,
-    textAlign: "center",
   },
   form: {
     backgroundColor: "#FFFFFF",
@@ -326,4 +383,19 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 14,
   },
+  logoutButton: {
+  backgroundColor: "#FFF5F5",
+  borderWidth: 1,
+  borderColor: "#F2CCCC",
+  padding: 13,
+  borderRadius: 9,
+  alignItems: "center",
+  marginTop: 14,
+},
+
+logoutButtonText: {
+  color: "#DC5555",
+  fontWeight: "bold",
+  fontSize: 14,
+},
 });

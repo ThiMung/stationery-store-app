@@ -11,7 +11,6 @@ import {
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import Header from "../../components/Header";
 import {
   getOrderDetails,
   type OrderDetail,
@@ -123,7 +122,6 @@ export default function OrderDetailScreen() {
     }}
     showsVerticalScrollIndicator={false}
   >
-      <Header />
 
       <Pressable
         style={styles.backButton}

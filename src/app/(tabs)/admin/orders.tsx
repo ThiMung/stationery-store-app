@@ -13,8 +13,6 @@ import {
 } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 
-import Header from "../../../components/Header";
-
 import {
   getAdminOrders,
   getAdminOrderDetails,
@@ -251,8 +249,6 @@ export default function AdminOrdersScreen() {
         onRefresh={loadOrders}
         ListHeaderComponent={
           <View>
-            <Header />
-
             <Pressable
               style={styles.backButton}
               onPress={() => router.back()}

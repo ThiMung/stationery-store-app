@@ -12,7 +12,6 @@ import {
 import { router, useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import Header from "../../components/Header";
 import {
   getUserOrders,
   type OrderSummary,
@@ -155,7 +154,6 @@ export default function OrderHistoryScreen() {
         onRefresh={loadOrders}
         ListHeaderComponent={
           <View>
-            <Header />
 
             <Pressable
               style={styles.backButton}

@@ -17,8 +17,6 @@ import * as ImagePicker from "expo-image-picker";
 // import * as ImageManipulator from "expo-image-manipulator";
 import { Directory, File, Paths } from "expo-file-system";
 
-import Header from "../../../components/Header";
-
 import {
   addProduct,
   deleteProduct,
@@ -443,8 +441,6 @@ const handlePickImage = async () => {
         onRefresh={loadData}
         ListHeaderComponent={
           <View>
-            <Header />
-
             <Pressable
               style={styles.backButton}
               onPress={() => router.back()}

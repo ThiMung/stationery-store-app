@@ -13,7 +13,6 @@ import {
 import { router, useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import Header from "../components/Header";
 import {
   getCartItems,
   updateCartItemQuantity,
@@ -217,7 +216,6 @@ export default function CartScreen() {
         onRefresh={loadCart}
         ListHeaderComponent={
           <View>
-            <Header />
 
             <Pressable
               style={styles.backButton}

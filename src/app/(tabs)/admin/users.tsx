@@ -11,7 +11,6 @@ import {
   View,
 } from "react-native";
 
-import Header from "../../../components/Header";
 import { getCurrentUser } from "../../../services/authService";
 import {
   deleteUser,
@@ -219,8 +218,6 @@ export default function AdminUsersScreen() {
       onRefresh={loadUsers}
       ListHeaderComponent={
         <View>
-          <Header />
-
           <Pressable
             style={styles.backButton}
             onPress={() => router.back()}
