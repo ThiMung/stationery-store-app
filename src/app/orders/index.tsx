@@ -1,4 +1,3 @@
-
 import { useCallback, useState } from "react";
 import {
   View,
@@ -12,53 +11,21 @@ import {
 import { router, useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import {
-  getUserOrders,
-  type OrderSummary,
-} from "../../services/orderService";
-
+import { getUserOrders } from "../../services/orderService";
 import { getCurrentUser } from "../../services/authService";
-
-// Chuyển trạng thái đơn hàng thành tiếng Việt
-function getStatusLabel(status: string) {
-  switch (status) {
-    case "PENDING":
-      return "Chờ xử lý";
-    case "CONFIRMED":
-      return "Đã xác nhận";
-    case "SHIPPING":
-      return "Đang giao hàng";
-    case "COMPLETED":
-      return "Đã hoàn thành";
-    case "CANCELLED":
-      return "Đã hủy";
-    default:
-      return status;
-  }
-}
-
-function formatDate(dateString: string) {
-  const date = new Date(dateString);
-
-  if (Number.isNaN(date.getTime())) {
-    return dateString;
-  }
-
-  return date.toLocaleString("vi-VN");
-}
+import type { OrderSummary } from "../../types/order";
+import UserOrderCard from "../../components/order/UserOrderCard";
 
 export default function OrderHistoryScreen() {
   const [orders, setOrders] = useState<OrderSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [needLogin, setNeedLogin] = useState(false);
 
-  // Tải lịch sử đơn hàng
+  // Tải lịch sử đơn hàng từ SQLite
   const loadOrders = useCallback(async () => {
     try {
       setLoading(true);
-
       const user = await getCurrentUser();
-
       if (!user) {
         setNeedLogin(true);
         setOrders([]);
@@ -66,163 +33,80 @@ export default function OrderHistoryScreen() {
       }
 
       setNeedLogin(false);
-
       const data = await getUserOrders();
       setOrders(data);
     } catch (error) {
       const message =
-        error instanceof Error
-          ? error.message
-          : "Không thể tải lịch sử đơn hàng.";
-
+        error instanceof Error ? error.message : "Không thể tải lịch sử đơn hàng.";
       Alert.alert("Lỗi", message);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Tải lại khi người dùng mở màn hình
   useFocusEffect(
     useCallback(() => {
       loadOrders();
     }, [loadOrders])
   );
 
-  const renderOrder = ({ item }: { item: OrderSummary }) => {
+  if (loading) {
     return (
-      <Pressable
-        style={styles.orderCard}
-        onPress={() =>
-          router.push({
-            pathname: "/orders/[id]",
-            params: { id: item.id },
-          })
-        }
-      >
-        <View style={styles.orderHeader}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.orderId}>
-              {item.id}
-            </Text>
-
-            <Text style={styles.orderDate}>
-              {formatDate(item.createdAt)}
-            </Text>
-          </View>
-
-          <Text style={styles.status}>
-            {getStatusLabel(item.status)}
-          </Text>
-        </View>
-
-        <View style={styles.separator} />
-
-        <View style={styles.orderFooter}>
-          <View>
-            <Text style={styles.itemCount}>
-              {item.itemCount} loại sản phẩm
-            </Text>
-
-            <Text style={styles.totalLabel}>
-              Tổng tiền
-            </Text>
-          </View>
-
-          <Text style={styles.totalPrice}>
-            {item.totalAmount.toLocaleString("vi-VN")} đ
-          </Text>
-        </View>
-
-        <Text style={styles.detailLink}>
-          Xem chi tiết đơn hàng →
-        </Text>
-      </Pressable>
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#338DA3" />
+        <Text style={styles.loadingText}>Đang tải lịch sử đơn hàng...</Text>
+      </View>
     );
-  };
+  }
+
+  if (needLogin) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.emptyTitle}>Bạn chưa đăng nhập</Text>
+        <Text style={styles.emptyText}>Vui lòng đăng nhập để xem đơn hàng đã mua.</Text>
+        <Pressable
+          style={styles.primaryButton}
+          onPress={() => router.push("/(tabs)/login")}
+        >
+          <Text style={styles.primaryButtonText}>Đăng nhập</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   return (
-      <SafeAreaView
-    style={{ flex: 1, backgroundColor: "#F5F7FA" }}
-    edges={["top", "bottom"]}
-  >
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#F5F7FA" }} edges={["top", "bottom"]}>
       <FlatList
         data={orders}
         keyExtractor={(item) => item.id}
-        renderItem={renderOrder}
+        renderItem={({ item }) => <UserOrderCard order={item} />}
         contentContainerStyle={styles.listContent}
         refreshing={loading}
         onRefresh={loadOrders}
         ListHeaderComponent={
           <View>
-
-            <Pressable
-              style={styles.backButton}
-              onPress={() => router.back()}
-            >
-              <Text style={styles.backText}>
-                ‹ Quay lại
-              </Text>
+            <Pressable style={styles.backButton} onPress={() => router.back()}>
+              <Text style={styles.backText}>‹ Quay lại</Text>
             </Pressable>
-
-            <Text style={styles.title}>
-              Lịch sử đơn hàng
+            <Text style={styles.title}>Lịch sử đơn hàng</Text>
+            <Text style={styles.subtitle}>
+              Các đơn hàng bạn đã đặt tại Happy Store.
             </Text>
-
-            {!needLogin && (
-              <Text style={styles.subtitle}>
-                Tổng số đơn hàng: {orders.length}
-              </Text>
-            )}
           </View>
         }
         ListEmptyComponent={
-          loading ? (
-            <ActivityIndicator
-              size="large"
-              color="#338DA3"
-              style={{ marginTop: 30 }}
-            />
-          ) : needLogin ? (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyTitle}>
-                Bạn chưa đăng nhập
-              </Text>
-
-              <Text style={styles.emptyText}>
-                Vui lòng đăng nhập để xem lịch sử đơn hàng.
-              </Text>
-
-              <Pressable
-                style={styles.primaryButton}
-                onPress={() => router.push("/(tabs)/login")}
-              >
-                <Text style={styles.primaryButtonText}>
-                  Đăng nhập
-                </Text>
-              </Pressable>
-            </View>
-          ) : (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyIcon}>📦</Text>
-
-              <Text style={styles.emptyTitle}>
-                Bạn chưa có đơn hàng nào
-              </Text>
-
-              <Text style={styles.emptyText}>
-                Các đơn hàng của bạn sẽ xuất hiện ở đây sau khi đặt hàng thành công.
-              </Text>
-
-              <Pressable
-                style={styles.primaryButton}
-                onPress={() => router.replace("/(tabs)")}
-              >
-                <Text style={styles.primaryButtonText}>
-                  Tiếp tục mua sắm
-                </Text>
-              </Pressable>
-            </View>
-          )
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyTitle}>Chưa có đơn hàng nào</Text>
+            <Text style={styles.emptyText}>
+              Hãy bắt đầu mua sắm để tạo đơn hàng đầu tiên của bạn!
+            </Text>
+            <Pressable
+              style={styles.primaryButton}
+              onPress={() => router.replace("/(tabs)")}
+            >
+              <Text style={styles.primaryButtonText}>Mua sắm ngay</Text>
+            </Pressable>
+          </View>
         }
       />
     </SafeAreaView>
@@ -230,121 +114,22 @@ export default function OrderHistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  listContent: { padding: 16, paddingBottom: 30 },
+  center: {
     flex: 1,
     backgroundColor: "#F5F7FA",
-  },
-  listContent: {
-    padding: 16,
-    paddingBottom: 30,
-    flexGrow: 1,
-  },
-  backButton: {
-    alignSelf: "flex-start",
-    paddingVertical: 8,
-  },
-  backText: {
-    color: "#338DA3",
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-  title: {
-    fontSize: 23,
-    fontWeight: "bold",
-    color: "#333333",
-    marginTop: 12,
-  },
-  subtitle: {
-    fontSize: 13,
-    color: "#777777",
-    marginTop: 5,
-    marginBottom: 15,
-  },
-  orderCard: {
-    backgroundColor: "#FFFFFF",
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 13,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-  },
-  orderHeader: {
-    flexDirection: "row",
+    justifyContent: "center",
     alignItems: "center",
+    padding: 25,
   },
-  orderId: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#333333",
-  },
-  orderDate: {
-    fontSize: 12,
-    color: "#888888",
-    marginTop: 5,
-  },
-  status: {
-    color: "#338DA3",
-    fontSize: 12,
-    fontWeight: "bold",
-    backgroundColor: "#EAF2F4",
-    paddingHorizontal: 9,
-    paddingVertical: 6,
-    borderRadius: 7,
-    marginLeft: 8,
-  },
-  separator: {
-    height: 1,
-    backgroundColor: "#EEEEEE",
-    marginVertical: 13,
-  },
-  orderFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  itemCount: {
-    fontSize: 12,
-    color: "#777777",
-  },
-  totalLabel: {
-    fontSize: 12,
-    color: "#777777",
-    marginTop: 6,
-  },
-  totalPrice: {
-    color: "#E76F51",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  detailLink: {
-    textAlign: "right",
-    color: "#338DA3",
-    fontSize: 12,
-    fontWeight: "bold",
-    marginTop: 12,
-  },
-  emptyContainer: {
-    alignItems: "center",
-    padding: 24,
-    marginTop: 30,
-  },
-  emptyIcon: {
-    fontSize: 45,
-    marginBottom: 12,
-  },
-  emptyTitle: {
-    color: "#333333",
-    fontSize: 17,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  emptyText: {
-    color: "#777777",
-    fontSize: 13,
-    textAlign: "center",
-    marginTop: 8,
-    lineHeight: 20,
-  },
+  loadingText: { color: "#777777", marginTop: 12 },
+  backButton: { alignSelf: "flex-start", paddingVertical: 8 },
+  backText: { color: "#338DA3", fontSize: 14, fontWeight: "bold" },
+  title: { fontSize: 24, fontWeight: "bold", color: "#333333", marginTop: 8 },
+  subtitle: { color: "#777777", fontSize: 13, marginTop: 4, marginBottom: 16 },
+  emptyContainer: { alignItems: "center", marginTop: 40, paddingHorizontal: 20 },
+  emptyTitle: { fontSize: 18, fontWeight: "bold", color: "#333333" },
+  emptyText: { color: "#777777", textAlign: "center", marginTop: 8 },
   primaryButton: {
     backgroundColor: "#338DA3",
     paddingHorizontal: 22,
@@ -352,8 +137,5 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 18,
   },
-  primaryButtonText: {
-    color: "#FFFFFF",
-    fontWeight: "bold",
-  },
+  primaryButtonText: { color: "#FFFFFF", fontWeight: "bold" },
 });

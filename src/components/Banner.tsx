@@ -1,5 +1,5 @@
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ElementRef } from "react";
 import {
   View,
   Image,
@@ -25,7 +25,7 @@ const banners = [
 ];
 
 export default function Banner() {
-  const scrollRef = useRef<ScrollView | null>(null);
+  const scrollRef = useRef<ElementRef<typeof ScrollView>>(null);
   const activeIndexRef = useRef(0);
 
   const [activeIndex, setActiveIndex] = useState(0);
